@@ -46,7 +46,6 @@ def get_navigator_server_url():
   """Returns the navigator.server.url"""
   return get_conf('navigator-lineage').get(_CONF_NAVIGATOR_SERVER_URL, 'http://localhost:7187')
 
-
 def get_navigator_audit_log_dir():
   """Returns audit_event_log_dir"""
   return get_conf().get(_CONF_NAVIGATOR_AUDIT_LOG_DIR, '')

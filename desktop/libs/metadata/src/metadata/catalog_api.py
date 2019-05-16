@@ -243,8 +243,8 @@ def find_entity(request):
 
   interface = request.GET.get('interface', CATALOG.INTERFACE.get())
   entity_type = request.GET.get('type', '')
-  database = request.GET.get('database', '')
-  table = request.GET.get('table', '')
+  database = request.GET.get('database', '') or request.GET.get('hive_db', '')
+  table = request.GET.get('table', '') or request.GET.get('hive_table', '')
   name = request.GET.get('name', '')
   path = request.GET.get('path', '')
 
@@ -253,16 +253,16 @@ def find_entity(request):
   if not entity_type:
     raise MetadataApiException("find_entity requires a type value, e.g. - 'database', 'table', 'file'")
 
-  if entity_type.lower() == 'database':
+  if entity_type.lower() == 'database' or entity_type.lower() == 'hive_db':
     if not name:
       raise MetadataApiException('get_database requires name param')
     response['entity'] = api.get_database(name)
-  elif entity_type.lower() == 'table' or entity_type.lower() == 'view':
+  elif entity_type.lower() == 'table' or entity_type.lower() == 'view' or entity_type.lower() == 'hive_table':
     if not database or not name:
       raise MetadataApiException('get_table requires database and name param')
     is_view = entity_type.lower() == 'view'
     response['entity'] = api.get_table(database, name, is_view=is_view)
-  elif entity_type.lower() == 'field':
+  elif entity_type.lower() == 'field' or entity_type.lower() == 'hive_column':
     if not database or not table or not name:
       raise MetadataApiException('get_field requires database, table, and name params')
     response['entity'] = api.get_field(database, table, name)
@@ -307,16 +307,19 @@ def get_entity(request):
   response = {'status': -1}
 
   interface = request.GET.get('interface', CATALOG.INTERFACE.get())
-  entity_id = request.GET.get('id')
-
   api = get_api(request=request, interface=interface)
+  if interface =='atlas':
+    query = request.GET.get('query')
+    if not query:
+      raise MetadataApiException("get_entity requires a 'query' parameter")
+    entity = api.get_entity(query)
+  elif interface =='navigator':
+    entity_id = request.GET.get('id')
+    if not entity_id:
+      raise MetadataApiException("get_entity requires an 'id'parameter")
+    entity = api.get_entity(entity_id)
 
-  if not entity_id:
-    raise MetadataApiException("get_entity requires an 'id' parameter")
-
-  entity = api.get_entity(entity_id)
-
-  response['entity'] = entity
+  response['entities'] = entity
   response['status'] = 0
 
   return JsonResponse(response)
