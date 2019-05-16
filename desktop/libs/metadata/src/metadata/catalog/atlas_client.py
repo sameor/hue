@@ -47,8 +47,10 @@ class AtlasApi(Api):
     super(AtlasApi, self).__init__(user)
 
     self._api_url = CATALOG.API_URL.get().strip('/')
-    self._username = CATALOG.SERVER_USER.get()
-    self._password = get_catalog_auth_password()
+    # self._username = CATALOG.SERVER_USER.get()
+    # self._password = get_catalog_auth_password()
+    self._username = 'admin'
+    self._password = 'admin'
 
     # Navigator does not support Kerberos authentication while other components usually requires it
     self._client = UnsecureHttpClient(self._api_url, logger=LOG)
@@ -62,20 +64,23 @@ class AtlasApi(Api):
 
 
   def _get_types_from_sources(self, sources):
-    default_entity_types = entity_types = ('DATABASE', 'TABLE', 'PARTITION', 'FIELD', 'FILE', 'VIEW', 'S3BUCKET', 'OPERATION', 'DIRECTORY')
-
+    ##default_entity_types = entity_types = ('DATABASE', 'TABLE', 'PARTITION', 'FIELD', 'FILE', 'VIEW', 'S3BUCKET', 'OPERATION', 'DIRECTORY')
+    default_entity_types = entity_types = ('hive_db', 'hive_table', 'hive_columns','aws_s3_bucket','aws_s3_object','aws_s3_pseudo_dir','fs_path','hdfs_path')
     if 'sql' in sources or 'hive' in sources or 'impala' in sources:
-      entity_types = ('TABLE', 'VIEW', 'DATABASE', 'PARTITION', 'FIELD')
-      default_entity_types = ('TABLE', 'VIEW')
+      #entity_types = ('TABLE', 'VIEW', 'DATABASE', 'PARTITION', 'FIELD')
+      #default_entity_types = ('TABLE', 'VIEW')
+      entity_types = ('hive_db', 'hive_table', 'hive_columns', 'hive_column_lineage', 'hive_process', 'hive_storagedesc')
+      default_entity_types = ('hive_db', 'hive_table', 'hive_columns')
     elif 'hdfs' in sources:
-      entity_types = ('FILE', 'DIRECTORY')
-      default_entity_types  = ('FILE', 'DIRECTORY')
+      # entity_types = ('FILE', 'DIRECTORY')
+      # default_entity_types  = ('FILE', 'DIRECTORY')
+      entity_types = ('fs_path', 'hdfs_path')
+      default_entity_types  = ('fs_path', 'hdfs_path')
     elif 's3' in sources:
-      entity_types = ('FILE', 'DIRECTORY', 'S3BUCKET')
-      default_entity_types  = ('DIRECTORY', 'S3BUCKET')
+      entity_types = ('aws_s3_bucket','aws_s3_object','aws_s3_pseudo_dir')
+      default_entity_types  = ('aws_s3_bucket','aws_s3_object','aws_s3_pseudo_dir')
 
     return default_entity_types, entity_types
-
 
   def search_entities_interactive(self, query_s=None, limit=100, offset=0, facetFields=None, facetPrefix=None, facetRanges=None, filterQueries=None, firstClassEntitiesOnly=None, sources=None):
     try:
@@ -315,6 +320,7 @@ class AtlasApi(Api):
     """
     GET /api/v3/entities?query=((sourceType:<source_type>)AND(type:<type>)AND(originalName:<name>))
     http://cloudera.github.io/navigator/apidocs/v3/path__v3_entities.html
+
     """
     try:
       params = self.__params
@@ -357,27 +363,28 @@ class AtlasApi(Api):
       LOG.error(msg)
       raise CatalogApiException(e.message)
 
-
-  def get_entity(self, entity_id):
+  def get_entity(self, query):
     """
-    GET /api/v3/entities/:id
-    http://cloudera.github.io/navigator/apidocs/v3/path__v3_entities_-id-.html
+    GET /v2/search/dsl?query=
+    query=hive_db+where+name=sys  returns hive_db with name 'sys'
+    query=hive_table+where+name=depth_2_table_name_afhwn_80  returns hive_table with name 'depth_2_table_name_afhwn_80'
+    query=hdfs_path+where+__guid='4a73e4dd-4d01-4bc8-998c-e8a4db552817' returns hdfs_path with specific guid
+    https://atlas.apache.org/api/v2/
     """
     try:
-      return self._root.get('entities/%s' % entity_id, headers=self.__headers, params=self.__params)
+      return self._root.get('/v2/search/dsl?query=%s' % query, headers=self.__headers, params=self.__params)
     except RestException, e:
-      msg = 'Failed to get entity %s: %s' % (entity_id, str(e))
+      msg = 'Failed to get entities for %s: %s' % (query, str(e))
       LOG.error(msg)
       raise CatalogApiException(e.message)
 
 
   def update_entity(self, entity, **metadata):
     """
-    PUT /api/v3/entities/:id
-    http://cloudera.github.io/navigator/apidocs/v3/path__v3_entities_-id-.html
+    POST /v2/entity
+    https://atlas.apache.org/api/v2/
     """
     try:
-      # Workarounds NAV-6187: if we don't re-send those, they would get erased.
       properties = {
         'name': entity['name'],
         'description': entity['description'],
@@ -405,62 +412,62 @@ class AtlasApi(Api):
     # return self._root.get('entities', headers=self.__headers, params=params)
 
 
-  def add_tags(self, entity_id, tags):
-    entity = self.get_entity(entity_id)
-    new_tags = entity['tags'] or []
-    new_tags.extend(tags)
-    return self.update_entity(entity, tags=new_tags)
-
-
-  def delete_tags(self, entity_id, tags):
-    entity = self.get_entity(entity_id)
-    new_tags = entity['tags'] or []
-    for tag in tags:
-      if tag in new_tags:
-        new_tags.remove(tag)
-    return self.update_entity(entity, tags=new_tags)
-
-
-  def update_properties(self, entity_id, properties, modified_custom_metadata=None, deleted_custom_metadata_keys=None):
-    entity = self.get_entity(entity_id)
-
-    if modified_custom_metadata:
-      properties['properties'] = entity['properties'] or {}
-      properties['properties'].update(modified_custom_metadata)
-    if deleted_custom_metadata_keys:
-      properties['properties'] = entity['properties'] or {}
-      for key in deleted_custom_metadata_keys:
-        if key in properties['properties']:
-          del properties['properties'][key]
-    return self.update_entity(entity, **properties)
-
-
-  def delete_metadata_properties(self, entity_id, property_keys):
-    entity = self.get_entity(entity_id)
-    new_props = entity['properties'] or {}
-    for key in property_keys:
-      if key in new_props:
-        del new_props[key]
-    return self.update_entity(entity, properties=new_props)
-
-
-  def get_lineage(self, entity_id):
-    """
-    GET /api/v3/lineage/entityIds=:id
-    http://cloudera.github.io/navigator/apidocs/v3/path__v3_lineage.html
-    """
-    try:
-      params = self.__params
-
-      params += (
-        ('entityIds', entity_id),
-      )
-
-      return self._root.get('lineage', headers=self.__headers, params=params)
-    except RestException, e:
-      msg = 'Failed to get lineage for entity ID %s: %s' % (entity_id, str(e))
-      LOG.error(msg)
-      raise CatalogApiException(e.message)
+  # def add_tags(self, entity_id, tags):
+  #   entity = self.get_entity(entity_id)
+  #   new_tags = entity['tags'] or []
+  #   new_tags.extend(tags)
+  #   return self.update_entity(entity, tags=new_tags)
+  #
+  #
+  # def delete_tags(self, entity_id, tags):
+  #   entity = self.get_entity(entity_id)
+  #   new_tags = entity['tags'] or []
+  #   for tag in tags:
+  #     if tag in new_tags:
+  #       new_tags.remove(tag)
+  #   return self.update_entity(entity, tags=new_tags)
+  #
+  #
+  # def update_properties(self, entity_id, properties, modified_custom_metadata=None, deleted_custom_metadata_keys=None):
+  #   entity = self.get_entity(entity_id)
+  #
+  #   if modified_custom_metadata:
+  #     properties['properties'] = entity['properties'] or {}
+  #     properties['properties'].update(modified_custom_metadata)
+  #   if deleted_custom_metadata_keys:
+  #     properties['properties'] = entity['properties'] or {}
+  #     for key in deleted_custom_metadata_keys:
+  #       if key in properties['properties']:
+  #         del properties['properties'][key]
+  #   return self.update_entity(entity, **properties)
+  #
+  #
+  # def delete_metadata_properties(self, entity_id, property_keys):
+  #   entity = self.get_entity(entity_id)
+  #   new_props = entity['properties'] or {}
+  #   for key in property_keys:
+  #     if key in new_props:
+  #       del new_props[key]
+  #   return self.update_entity(entity, properties=new_props)
+  #
+  #
+  # def get_lineage(self, entity_id):
+  #   """
+  #   GET /api/v3/lineage/entityIds=:id
+  #   http://cloudera.github.io/navigator/apidocs/v3/path__v3_lineage.html
+  #   """
+  #   try:
+  #     params = self.__params
+  #
+  #     params += (
+  #       ('entityIds', entity_id),
+  #     )
+  #
+  #     return self._root.get('lineage', headers=self.__headers, params=params)
+  #   except RestException, e:
+  #     msg = 'Failed to get lineage for entity ID %s: %s' % (entity_id, str(e))
+  #     LOG.error(msg)
+  #     raise CatalogApiException(e.message)
 
 
   def create_namespace(self, namespace, description=None):

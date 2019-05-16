@@ -62,6 +62,11 @@ def default_navigator_url():
   from metadata.metadata_sites import get_navigator_server_url
   return get_navigator_server_url() + '/api'
 
+def default_atlas_url():
+  """Get from usual main Hue config directory"""
+  from metadata.metadata_sites import get_atlas_server_url
+  return get_atlas_server_url()
+
 
 def get_optimizer_url():
   return OPTIMIZER.HOSTNAME.get() and OPTIMIZER.HOSTNAME.get().strip('/')
@@ -405,6 +410,50 @@ NAVIGATOR = ConfigSection(
       dynamic_default=get_security_default,
       type=coerce_bool
     ),
+    FETCH_SIZE_SEARCH = Config(
+      key="fetch_size_search",
+      help=_t("Max number of items to fetch in one call in object search."),
+      default=450,
+      type=int
+    ),
+    FETCH_SIZE_SEARCH_INTERACTIVE = Config(
+      key="fetch_size_search_interactive",
+      help=_t("Max number of items to fetch in one call in object search autocomplete."),
+      default=450,
+      type=int
+    ),
+
+    ENABLE_FILE_SEARCH = Config(
+      key="enable_file_search",
+      help=_t("Enable to search HDFS, S3 files."),
+      type=coerce_bool,
+      default=False
+    )
+  )
+)
+
+# Atlas configs
+ATLAS = ConfigSection(
+  key='atlas',
+  help=_t("""Configuration options for Atlas API"""),
+  members=dict(
+    API_URL=Config(
+      key='api_url',
+      help=_t('Base URL to Atlas API.'),
+      dynamic_default=default_atlas_url),
+
+
+    AUTH_CM_USERNAME=Config(
+      key="atlasmetadataserver_user",
+      help=_t("Username of the CM user used for authentication."),
+      dynamic_default=get_auth_username),
+    AUTH_CM_PASSWORD=Config(
+      key="atlasmetadataserver_password",
+      help=_t("CM password of the user used for authentication."),
+      private=True,
+      #dynamic_default=get_atlas_cm_password
+      ),
+
     FETCH_SIZE_SEARCH = Config(
       key="fetch_size_search",
       help=_t("Max number of items to fetch in one call in object search."),

@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
+
 import logging
 
 from nose.plugins.skip import SkipTest
@@ -167,6 +169,18 @@ class TestNavigatorClient(NavigatorClientTest):
     self.reset()
 
   def test_search_entities(self):
+    query_data = {"excludeDeletedEntities": True,
+                  "includeSubClassifications": True,
+                  "includeSubTypes": True, "includeClassificationAttributes": True,
+                  "entityFilters": None, "tagFilters": None, "attributes": [],
+                  "query": "sys", "limit": 25, "offset": 0, "typeName": "hive_db", "classification": None,
+                  "termName": None}
+    data = json.dumps(query_data)
+    LOG.info(data)
+
+    response = self.post('/v2/search/basic', data=data, contenttype=_JSON_CONTENT_TYPE)
+    LOG.info(response['entities'])
+
     if get_navigator_hue_server_name():
       cluster_filter = '(sourceId:1 OR sourceId:2) AND (%s)'
     else:
@@ -187,7 +201,7 @@ class TestNavigatorClient(NavigatorClientTest):
         self.api.search_entities(query_s='type:{}()[]*', sources=['hive'])[0][1]
     )
 
-    # type:
+   # type:
     # type:VIEW
     # type:VIEW ca
     # type:VIEW ca owner:hue
