@@ -78,6 +78,9 @@ class AtlasApi(Api):
 
 
   def search_entities_interactive(self, query_s=None, limit=100, offset=0, facetFields=None, facetPrefix=None, facetRanges=None, filterQueries=None, firstClassEntitiesOnly=None, sources=None):
+    if facetFields == ['tags']:
+      return {"facets": {'tags': []}}
+
     try:
       query_data = {
         "excludeDeletedEntities": True,
