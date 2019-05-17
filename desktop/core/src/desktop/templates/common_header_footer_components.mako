@@ -31,7 +31,7 @@ from metadata.conf import has_optimizer, OPTIMIZER
   <!--[if lt IE 9]>
   <script type="text/javascript">
     if (document.documentMode && document.documentMode < 9){
-      location.href = "${ url('desktop_views_unsupported') }";
+      huePubSub.publish('open.link', "${ url('desktop_views_unsupported') }");
     }
   </script>
   <![endif]-->
@@ -42,13 +42,13 @@ from metadata.conf import has_optimizer, OPTIMIZER
     var _UA = navigator.userAgent.toLowerCase();
     for (var i = 1; i < 7; i++) {
       if (_UA.indexOf("firefox/" + i + ".") > -1) {
-        location.href = "${ url('desktop_views_unsupported') }";
+        huePubSub.publish('open.link', "${ url('desktop_views_unsupported') }");
       }
     }
 
     // check for IE document modes
     if (document.documentMode && document.documentMode < 9){
-      location.href = "${ url('desktop_views_unsupported') }";
+      huePubSub.publish('open.link', "${ url('desktop_views_unsupported') }");
     }
 
     // sets a global variable to see if it's IE11 or not
@@ -87,6 +87,20 @@ from metadata.conf import has_optimizer, OPTIMIZER
       }
     }
 
+
+    var xhrOpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function () {
+      if (arguments[1].indexOf(window.HUE_BASE_URL) < 0) {
+        var index = arguments[1].indexOf(window.location.host);
+        if (index >= 0 && window.HUE_BASE_URL.length) { //Host is present in the url when using an html form.
+          index += window.location.host.length;
+            arguments[1] = arguments[1].substring(0, index) + window.HUE_BASE_URL + arguments[1].substring(index);
+        } else {
+          arguments[1] = window.HUE_BASE_URL + arguments[1];
+        }
+      }
+      return xhrOpen.apply(this, arguments);
+    };
     var xhrSend = XMLHttpRequest.prototype.send;
     XMLHttpRequest.prototype.send = function (data) {
       // Add CSRF Token to all XHR Requests

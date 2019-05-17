@@ -60,8 +60,8 @@ admin.autodiscover()
 # Some django-wide URLs
 dynamic_patterns = [
   url(r'^hue/accounts/login', desktop_auth_views.dt_login, name='desktop_auth_views_dt_login'),
-  url(r'^accounts/login/$', desktop_auth_views.dt_login), # Deprecated
-  url(r'^accounts/logout/$', desktop_auth_views.dt_logout, {'next_page': '/'}),
+  url(r'^accounts/login/?$', desktop_auth_views.dt_login), # Deprecated
+  url(r'^accounts/logout/?$', desktop_auth_views.dt_logout, {'next_page': '/'}),
   url(r'^profile$', desktop_auth_views.profile),
   url(r'^login/oauth/?$', desktop_auth_views.oauth_login),
   url(r'^login/oauth_authenticated/?$', desktop_auth_views.oauth_authenticated),
@@ -103,7 +103,7 @@ dynamic_patterns += [
   # Mobile
   url(r'^assist_m', desktop_views.assist_m),
   # Hue 4
-  url(r'^hue.*/$', desktop_views.hue, name='desktop_views_hue'),
+  url(r'^hue.*/?$', desktop_views.hue, name='desktop_views_hue'),
   url(r'^403$', desktop_views.path_forbidden),
   url(r'^404$', desktop_views.not_found),
   url(r'^500$', desktop_views.server_error),
@@ -190,21 +190,21 @@ dynamic_patterns += [
 # Metrics specific
 if METRICS.ENABLE_WEB_METRICS.get():
   dynamic_patterns += [
-    url(r'^desktop/metrics/', include('desktop.lib.metrics.urls'))
+    url(r'^desktop/metrics/?', include('desktop.lib.metrics.urls'))
   ]
 
 if CONNECTORS.IS_ENABLED.get():
   dynamic_patterns += [
-    url(r'^desktop/connectors/', include('desktop.lib.connectors.urls'))
+    url(r'^desktop/connectors/?', include('desktop.lib.connectors.urls'))
   ]
 
 if ANALYTICS.IS_ENABLED.get():
   dynamic_patterns += [
-    url(r'^desktop/analytics/', include('desktop.lib.analytics.urls'))
+    url(r'^desktop/analytics/?', include('desktop.lib.analytics.urls'))
   ]
 
 dynamic_patterns += [
-  url(r'^admin/', include(admin.site.urls)),
+  url(r'^admin/?', include(admin.site.urls)),
 ]
 
 static_patterns = []

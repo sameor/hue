@@ -89,7 +89,7 @@ if USE_NEW_EDITOR.get():
   <!--[if lt IE 9]>
   <script type="text/javascript">
     if (document.documentMode && document.documentMode < 9){
-      location.href = "${ url('desktop_views_unsupported') }";
+      huePubSub.publish('open.link', "${ url('desktop_views_unsupported') }");
     }
   </script>
   <![endif]-->
@@ -99,13 +99,13 @@ if USE_NEW_EDITOR.get():
     var _UA = navigator.userAgent.toLowerCase();
     for (var i = 1; i < 7; i++) {
       if (_UA.indexOf("firefox/" + i + ".") > -1) {
-        location.href = "${ url('desktop_views_unsupported') }";
+        huePubSub.publish('open.link', "${ url('desktop_views_unsupported') }");
       }
     }
 
     // check for IE document modes
     if (document.documentMode && document.documentMode < 9){
-      location.href = "${ url('desktop_views_unsupported') }";
+      huePubSub.publish('open.link', "${ url('desktop_views_unsupported') }");
     }
   </script>
 
@@ -123,7 +123,7 @@ if USE_NEW_EDITOR.get():
   <script src="${ static('desktop/js/ace/ext-language_tools.js') }"></script>
   <script src="${ static('desktop/js/ace.extended.js') }"></script>
   <script>
-    ace.config.set("basePath", "/static/desktop/js/ace");
+    ace.config.set("basePath", "${ static('desktop/js/ace') }");
   </script>
 
   <script type="text/javascript">

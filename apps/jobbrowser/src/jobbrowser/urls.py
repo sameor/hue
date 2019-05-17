@@ -23,7 +23,7 @@ from jobbrowser import api2 as jobbrowser_api2
 urlpatterns = [
   # "Default"
   url(r'^$', jobbrowser_views.jobs),
-  url(r'^jobs/$', jobbrowser_views.jobs, name='jobs'),
+  url(r'^jobs/?$', jobbrowser_views.jobs, name='jobs'),
   url(r'^jobs/(?P<job>\w+)$', jobbrowser_views.single_job, name='jobbrowser.views.single_job'),
   url(r'^jobs/(?P<job>\w+)/counters$', jobbrowser_views.job_counters, name='job_counters'),
   url(r'^jobs/(?P<job>\w+)/kill$', jobbrowser_views.kill_job, name='kill_job'),
@@ -48,7 +48,7 @@ urlpatterns = [
   url(r'^clusterstatus$', jobbrowser_views.clusterstatus, name='clusterstatus'),
   url(r'^queues$', jobbrowser_views.queues, name='queues'),
   url(r'^jobbrowser$', jobbrowser_views.jobbrowser, name='jobbrowser'),
-  url(r'^dock_jobs/$', jobbrowser_views.dock_jobs, name='dock_jobs'),
+  url(r'^dock_jobs/?$', jobbrowser_views.dock_jobs, name='dock_jobs'),
 ]
 
 # V2

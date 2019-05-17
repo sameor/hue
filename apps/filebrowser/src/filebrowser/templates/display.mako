@@ -372,7 +372,7 @@ ${ fb_components.menubar() }
     }
 
     self.downloadFile = function () {
-      location.href = "${url('filebrowser_views_download', path=path_enc)}";
+      huePubSub.publish('open.link', "${url('filebrowser_views_download', path=path_enc)}");
     };
 
     self.pageChanged = function () {

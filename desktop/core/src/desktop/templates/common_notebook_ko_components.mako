@@ -359,6 +359,7 @@ except ImportError, e:
       function DownloadResultsViewModel (params, element) {
         var self = this;
         self.$downloadForm = $(element).find(".download-form");
+        self.$downloadForm.attr('action', window.HUE_BASE_URL + self.$downloadForm.attr('action'));
         self.snippet = params.snippet;
         self.notebook = params.notebook;
         self.gridSideBtn = ko.observable(params.gridSideBtn);

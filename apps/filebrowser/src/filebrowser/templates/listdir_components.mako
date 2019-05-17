@@ -1166,7 +1166,7 @@ from filebrowser.conf import ENABLE_EXTRACT_UPLOADED_ARCHIVE
           }
 
           if (data.type != null && data.type == "file") {
-            window.location.href = data.url;
+            huePubSub.publish('open.link', data.url);
             return false;
           }
 
@@ -1337,11 +1337,11 @@ from filebrowser.conf import ENABLE_EXTRACT_UPLOADED_ARCHIVE
       };
 
       self.editFile = function () {
-        window.location.href = "${url('filebrowser_views_edit', path='')}" + encodeURI(self.selectedFile().path);
+        huePubSub.publish('open.link', "${url('filebrowser_views_edit', path='')}" + encodeURI(self.selectedFile().path));
       };
 
       self.downloadFile = function () {
-        window.location.href = "${url('filebrowser_views_download', path='')}" + encodeURI(self.selectedFile().path);
+        huePubSub.publish('open.link', "${url('filebrowser_views_download', path='')}" + encodeURI(self.selectedFile().path));
       };
 
       self.renameFile = function () {
@@ -2452,7 +2452,7 @@ from filebrowser.conf import ENABLE_EXTRACT_UPLOADED_ARCHIVE
               %if is_embeddable:
               huePubSub.publish('open.link', data.url);
               %else:
-              window.location.href = data.url;
+              huePubSub.publish('open.link', data.url);
               %endif
               return false;
             } else {

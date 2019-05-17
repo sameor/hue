@@ -43,7 +43,7 @@ urlpatterns = [
 
   url(r'^editor/?$', notebook_views.editor, name='editor'),
   url(r'^editor_m/?$', notebook_views.editor_m, name='editor_m'),
-  url(r'^browse/(?P<database>\w+)/(?P<table>\w+)/(?P<partition_spec>.+?)?$', notebook_views.browse, name='browse'),
+  url(r'^browse/(?P<database>\w+)/(?P<table>\w+)/?(?P<partition_spec>.+?)?$', notebook_views.browse, name='browse'),
   url(r'^execute_and_watch/?$', notebook_views.execute_and_watch, name='execute_and_watch'),
 ]
 
